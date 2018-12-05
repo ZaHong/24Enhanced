@@ -1,0 +1,192 @@
+<head>
+</head>
+<script language='javascript'>
+var debug = false;
+var steps = new Array();
+var ResultSet = new Array();
+ResultSet.Add = function(newResult)
+{
+for (var i = 0; i < ResultSet.length; i++) 
+{
+if (ResultSet[i] == newResult)
+{
+return;
+}
+}
+ResultSet.push(newResult);
+}
+ResultSet.toString = function()
+{
+var msg = "";
+for (var i = 0; i < ResultSet.length; i++) 
+{
+msg += ResultSet[i] + "=" + answer.value + "\n";
+}
+msg += "计算结束，共得到"+ResultSet.length+"个不同结果";
+return msg;
+}
+function Assert(flag)
+{
+if (!flag)
+{
+throw new Error('Assertion failed!');
+}
+}
+Array.prototype.clone = function()
+{
+return this.slice(0);
+}
+function calcul(stack,oper)
+{
+Assert(oper == '+' || oper == '-' || oper == '*' || oper == '/');
+var lift = new Array();
+lift[0] = stack.pop()-0;
+lift[1] = stack.pop()-0;
+switch(oper)
+{
+case '+': stack.push(lift[1] + lift[0]);
+break;
+case '-': stack.push(lift[1] - lift[0]);
+break;
+case '*': stack.push(lift[1] * lift[0]);
+break;
+case '/': stack.push(lift[1] / lift[0]);
+break;
+}
+return lift;
+}
+function parseExp() //由逆波兰式构造出表达式
+{
+var stack = new Array();
+var exprs = new Array();
+
+for (var i = 0; i < steps.length; i++)
+{
+if (!isNaN(steps[i]))
+{
+stack.push(steps[i]);
+exprs.push(steps[i].toString());
+}
+else
+{
+var oper1 = exprs.pop();
+var oper2 = exprs.pop();
+var lift = calcul(stack, steps[i]);
+if (steps[i] == '*' || steps[i] == '+') //规定较大的数出现在*和+的左边，以避免出现过多重复的结果
+{
+if (lift[0] > lift[1])
+{
+var tmp = oper1;
+oper1 = oper2;
+oper2 = tmp;
+}
+}
+var subexpr = "(" + oper2 + ")" + steps[i] + "(" + oper1 + ")"; //判断是否要添加括号
+var subexpr1 = oper2 + steps[i] + oper1;
+var subexpr2 = "(" + oper2 + ")" + steps[i] + oper1;
+var subexpr3 = oper2 + steps[i] + "(" + oper1 + ")";
+if (Math.abs(eval(subexpr) - eval(subexpr1)) < 0.0001) subexpr = subexpr1;
+else if (Math.abs(eval(subexpr) - eval(subexpr2)) < 0.0001) subexpr = subexpr2;
+else if (Math.abs(eval(subexpr) - eval(subexpr3)) < 0.0001) subexpr = subexpr3;
+
+exprs.push(subexpr);
+}
+}
+return exprs[0];
+}
+
+function playCards(stack, cards)
+{
+if (debug) alert(stack + ":" + cards);
+if (stack.length == 1 && cards.length == 0)
+{
+if(Math.abs(stack[0] - answer.value) < 0.0001)
+{
+ResultSet.Add(parseExp());
+}
+return; //计算结束，输出计算结果
+}
+var newCards = null;
+var newStack = null;
+
+for(var i = 0 ; i < cards.length; i++)
+{
+var distinctCard = true;
+for (var j = 0; j < i; j++)
+{
+if (cards[j] == cards[i]) 
+{
+distinctCard = false;
+break;
+}
+}
+if (distinctCard)
+{
+newCards = cards.clone();
+newStack = stack.clone();
+newCards.splice(i,1);
+newStack.push(cards[i]);
+steps.push(cards[i]);
+playCards(newStack, newCards);
+steps.pop(cards[i]);
+}
+}
+
+calCard(stack.clone(),cards.clone(),'+');
+calCard(stack.clone(),cards.clone(),'-');
+calCard(stack.clone(),cards.clone(),'*');
+calCard(stack.clone(),cards.clone(),'/');
+}
+
+function calCard(stack,cards,oper)
+{
+if (stack.length < 2)
+{
+return;
+}
+steps.push(oper);
+calcul(stack,oper);
+playCards(stack, cards);
+steps.pop(oper);
+}
+
+function Play()
+{
+var stack = new Array();
+var cards = new Array();
+Result.value = "";
+ResultSet.length = 0;
+for (var i = 0; i < iCards.length; i++)
+{
+if (iCards[i].value == "" || isNaN(iCards[i].value))
+{
+alert('输入格式不正确');
+iCards[i].focus();
+return false;
+}
+cards.push(iCards[i].value);
+}
+
+playCards(stack, cards);
+Result.value += ResultSet.toString();
+}
+</script>
+<body>
+
+
+<input id = 'iCards' style='width:80px'/>
+<input id = 'iCards' style='width:80px'/>
+<input id = 'iCards' style='width:80px'/>
+<input id = 'iCards' style='width:80px'/>
+等于：
+<input id = 'answer' style='width:80px'/>
+<input type='button' value='计算' onclick="Play();"/>
+
+
+计算结果:
+
+<textarea id = 'Result' style='width:440px;height:200px'></textarea>
+</body>
+
+
+</textarea>
